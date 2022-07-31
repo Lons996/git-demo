@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns="http://www.springframework.org/schema/beans"
+       xmlns:mybatis="http://mybatis.org/schema/mybatis-spring"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/tx
+       http://www.springframework.org/schema/tx/spring-tx.xsd
+       http://www.springframework.org/schema/context
+       https://www.springframework.org/schema/context/spring-context.xsd
+       http://www.springframework.org/schema/aop
+       https://www.springframework.org/schema/aop/spring-aop.xsd
+       http://mybatis.org/schema/mybatis-spring
+       https://mybatis.org/schema/mybatis-spring.xsd">
+
+    <!--  引入外部配置文件  -->
+    <context:property-placeholder location="classpath:druid.properties"/>
+
+    <!--  配置数据库连接（druid）  -->
+    <bean id="druidDataSource" class="com.alibaba.druid.pool.DruidDataSource">
+        <property name="driverClassName" value="${druid.driverClassName}"/>
+        <property name="url" value="${druid.url}"/>
+        <property name="username" value="${druid.username}"/>
+        <property name="password" value="${druid.password}"/>
+        <property name="initialSize" value="${druid.initialSize}"/>
+        <property name="maxActive" value="${druid.maxActive}"/>
+        <property name="maxWait" value="${druid.maxWait}"/>
+    </bean>
+
+    <!--  Spring整合MyBatis  -->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <!--    配置数据库连接    -->
+        <property name="dataSource" ref="druidDataSource"/>
+        <!--    指定Mapper映射文件的位置    -->
+        <property name="mapperLocations" value="classpath:mapper/*.xml"/>
+        <!--    指定mybatis全局配置文件    -->
+        <property name="configLocation" value="classpath:mybatis-config.xml"/>
+    </bean>
+    <!-- 扫描Mapper接口 (将接口的实现加入到IOC容器中) -->
+    <mybatis:scan base-package="ssm.mapper"/>
+<!--    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">-->
+    <!--        &lt;!&ndash;扫描所有mapper接口的实现，加入到ioc容器中 &ndash;&gt;-->
+    <!--        <property name="basePackage" value="ssm.mapper"/>-->
+    <!--    </bean>-->
+
+
+    <!--  事务管理  -->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <!--注入数据源-->
+        <property name="dataSource" ref="druidDataSource"/>
+    </bean>
+
+    <!--  开启基于注解的事务管理  -->
+    <!--    <tx:annotation-driven transaction-manager="transactionManager"/>-->
+
+    <!--  ===============基于XMl配置的形式的事务管理==============  -->
+    <!--配置事务增强,事务如何切入-->
+    <tx:advice id="txAdvice" transaction-manager="transactionManager">
+        <tx:attributes>
+            <!--所有的方法都是事务方法-->
+            <tx:method name="*"/>
+            <!--get开头的方法设置为只读：可以优化查询速度-->
+            <tx:method name="get*" read-only="true"/>
+        </tx:attributes>
+    </tx:advice>
+
+    <!--配置切入点和切面-->
+    <aop:config>
+        <!--配置切面-->
+        <!--        <aop:aspect id="pt" ref="transactionManager"/>-->
+        <!--配置切入点 (切入点表达式：execution(所有的权限 包名下的 所有子包 及其方法(任意方法返回值)))-->
+        <aop:pointcut id="txPoint" expression="execution(* ssm.service..*(..))"/>
+        <!--配置事务增强-->
+        <aop:advisor advice-ref="txAdvice" pointcut-ref="txPoint"/>
+    </aop:config>
+
+
+</beans>

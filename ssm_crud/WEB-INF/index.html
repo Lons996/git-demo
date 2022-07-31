@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>首页</title>
+    <link rel="icon" href="http://localhost:8080/ssm_crud/static/img-icon/164.jpeg" type="image/x-icon">
+    <link rel="shortcut icon" href="http://localhost:8080/ssm_crud/static/img-icon/164.jpeg" type="image/x-icon">
+    <script src="http://localhost:8080/ssm_crud/static/axios.min.js"></script>
+    <script src="http://localhost:8080/ssm_crud/static/vue.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <style>
+        /* 锁定当前的元素 */
+        [v-cloak] {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<div id="div" v-cloak>
+    <div class="table" style="width:70%;margin: auto">
+        <div style="margin-bottom: 10px;">
+            <el-row>
+                <el-button type="success" @click="dialogVisible = true,isNo = false" plain>新增</el-button>
+                <el-button type="danger" plain>删除</el-button>
+            </el-row>
+        </div>
+        <hr/>
+        <el-table :data="tableData" style="width: 100%" border>
+            <el-table-column
+                    type="index"
+                    align="center"
+                    label="序号"
+                    width="40">
+            </el-table-column>
+            <el-table-column
+                    prop="empName"
+                    align="center"
+                    label="员工名称"
+                    width="180">
+            </el-table-column>
+            <el-table-column
+                    prop="empSex"
+                    align="center"
+                    label="员工性别"
+                    width="180">
+            </el-table-column>
+            <el-table-column
+                    prop="empDepartment.departmentName"
+                    align="center"
+                    label="员工部门">
+            </el-table-column>
+            <el-table-column
+                    prop="empEmail"
+                    align="center"
+                    label="员工邮箱">
+            </el-table-column>
+            <el-table-column type="empId" label="操作" align="center">
+                <template slot-scope="scope">
+                    <el-button
+                            size="mini"
+                            @click="openUpdateEmp(scope.row.empId)">编辑
+                    </el-button>
+                    <el-button
+                            size="mini"
+                            type="danger"
+                            @click="delEmp(scope.row.empId)">删除
+                    </el-button>
+                </template>
+            </el-table-column>
+        </el-table>
+        <div>
+            <el-button-group>
+                <el-button type="primary" size="mini" @click="getData(1)">首页</el-button>
+                <el-button type="primary"
+                           icon="el-icon-arrow-left"
+                           size="mini"
+                           @click="getData(listData.pageNum - 1)">上一页
+                </el-button>
+                <el-button type=" primary
+                " disabled size="mini">当前页 ：<b>{{listData.pageNum}}</b></el-button>
+                <el-button type="primary"
+                           size="mini"
+                           @click="getData(listData.pageNum + 1)">下一页<i class="el-icon-arrow-right"></i></el-button>
+                <el-button type="primary" size="mini" @click="getData(listData.pages)">尾页</el-button>
+            </el-button-group>
+            <el-button-group v-for="(item,value) in navigatepageNums" :key="value">
+                <el-button type="info" size="mini" @click="getData(item)" plain>{{item}}</el-button>
+            </el-button-group>
+            <span>
+                ---共 <i>{{listData.pages}}</i> 页
+                ---共 计 ：{{listData.total}}条数据
+            </span>
+        </div>
+    </div>
+    <div>
+        <el-dialog
+                title="用户新增"
+                :visible.sync="dialogVisible"
+                width="33%"
+                :before-close="handleClose">
+            <input v-model="id" hidden/>
+            <div>
+                <el-input placeholder="请输入内容" v-model="input1" clearable>
+                    <template slot="prepend"><b>用户名称</b></template>
+                </el-input>
+            </div>
+            <div style="margin-top: 10px;">
+                <el-input placeholder="请输入内容" v-model="input2" clearable>
+                    <template slot="prepend"><b>用户邮箱</b></template>
+                </el-input>
+            </div>
+            <div style="margin-top: 10px;">
+                <el-tag type="success" size="medium">选 择 部 门</el-tag>
+                <el-select v-model="value" placeholder="请选择">
+                    <el-option
+                            v-for="(item,value) in select"
+                            :key="value"
+                            :label="item.departmentName"
+                            :value="item.departmentId"
+                            clearable>
+                    </el-option>
+                </el-select>
+            </div>
+            <div style="margin-top: 10px;">
+                <el-radio v-model="radio" label="男">男</el-radio>
+                <el-radio v-model="radio" label="女">女</el-radio>
+            </div>
+
+            <span slot="footer" class="dialog-footer">
+            <el-button @click="dialogVisible = false">取 消</el-button>
+            <el-button v-if="!isNo" type="primary" @click="addEmp">确 定</el-button>
+            <el-button v-if="isNo" type="primary" @click="updateEmp">保 存</el-button>
+            </span>
+        </el-dialog>
+    </div>
+</div>
+</body>
+</html>
+<script>
+    window.onload = function () {
+        const vm = new Vue({
+            "el": "#div",
+            data() {
+                return {
+                    tableData: [{
+                        empId: '',
+                        empName: '',
+                        empSex: '',
+                        empDepartment: '',
+                        empEmail: '',
+                    }],
+                    listData: "",
+                    navigatepageNums: [],
+                    dialogVisible: false,
+                    input1: '',
+                    input2: '',
+                    isNo: false,//新增修改模态框标识
+                    value: '',
+                    select: "",//部门下拉框数据
+                    radio: "男",
+                    id: '',//修改模态框的员工id回填
+                }
+            },
+            watch: {
+                dialogVisible() {
+                    if (this.dialogVisible) {
+                        axios.get("http://192.168.124.1:8080/ssm_crud/getDept").then(value => {
+                            vm.$data.select = value.data.data.dept;
+                        }).catch(reason => {
+                            console.log(reason)
+                        })
+                    }
+                }
+            },
+            methods: {
+                getData(pageNum) {
+                    if (this.listData !== "") {
+                        if (pageNum > this.listData.pages) {
+                            return alert("再往下是无人区")
+                        }
+                        if (pageNum <= 0) {
+                            return alert("好日子到头了")
+                        }
+                    }
+                    if (pageNum <= 0) pageNum = 1;
+                    axios.get(`http://192.168.124.1:8080/ssm_crud/getData?pageNum=${pageNum}`).then(value => {
+                        console.log(value.data)
+                        vm.$data.listData = value.data.data.page;
+                        vm.$data.tableData = value.data.data.page.list;
+                        vm.$data.navigatepageNums = value.data.data.page.navigatepageNums;
+                    }).catch(reason => {
+                        console.log(reason)
+                    })
+                },
+                handleClose(done) {
+                    this.$confirm('确认关闭？')
+                        .then(_ => {
+                            done();
+                        })
+                        .catch(_ => {
+                        });
+                },
+                addEmp() {
+                    //验证邮箱的正则表达式;
+                    let emailRegExp = /^\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/;
+                    console.log(this.value)
+                    if (this.input1 === '') {
+                        return alert("用户名称为空！")
+                    } else if (this.input2 === '' || !emailRegExp.test(this.input2)) {
+                        return alert("用户邮箱错误！")
+                    } else if (this.value === '') {
+                        return alert("请选择部门")
+                    } else {
+                        axios({
+                            method: "post",
+                            url: "http://192.168.124.1:8080/ssm_crud/addEmp",
+                            params: {
+                                empName: vm.input1,
+                                empEmail: vm.input2,
+                                empSex: vm.radio,
+                                empDepartment: vm.value
+                            }
+                        }).then(value => {
+                            vm.dialogVisible = false;
+                            if (value.data.code === 100) {
+                                alert(value.data.msg)
+                                console.log(vm.getData(vm.listData.pages))
+                            }
+                        }).catch(reason => {
+                            console.log(reason)
+                        })
+                    }
+                },
+                delEmp(empId) {
+                    console.log(empId)
+                    if (!confirm("是否删除此用户信息")) return;
+                    if (empId === '' || empId <= 0) {
+                        return alert("Id错误！")
+                    }
+                    axios.get(`http://192.168.124.1:8080/ssm_crud/delEmpById?empId=${empId}`).then(value => {
+                        console.log(value.data)
+                        alert(value.data.msg)
+                        vm.getData(1);
+                    }).catch(reason => {
+                        console.log(reason)
+                    })
+                },
+                updateEmp() {
+                    axios({
+                        method: "post",
+                        url: `http://192.168.124.1:8080/ssm_crud/updateEmp`,
+                        params: {
+                            empId: vm.id,
+                            empName: vm.input1,
+                            empEmail: vm.input2,
+                            empDepartment: vm.value,
+                            empSex: vm.radio,
+                        }
+                    }).then(value => {
+                        vm.dialogVisible = false
+                        vm.getData(1)
+                        alert(value.data.msg)
+                    }).catch(reason => {
+                        console.log(reason)
+                    })
+                },
+                openUpdateEmp(empId) {
+                    vm.isNo = true;
+                    vm.dialogVisible = true;
+                    axios.get(`http://192.168.124.1:8080/ssm_crud/getEmpById?empId=${empId}`).then(value => {
+                        console.log(value.data)
+                        vm.id = value.data.data.emp.empId;
+                        vm.input1 = value.data.data.emp.empName;
+                        vm.input2 = value.data.data.emp.empEmail;
+                        vm.value = value.data.data.emp.empDepartment.departmentId;
+                        vm.radio = value.data.data.emp.empSex;
+                    }).catch(reason => {
+                        console.log(reason)
+                    })
+                },
+            },
+            mounted() {
+                this.getData(1);
+            }
+        })
+    }
+
+</script>

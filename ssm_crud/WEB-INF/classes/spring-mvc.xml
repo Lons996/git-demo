@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:mvn="http://www.springframework.org/schema/mvc"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context.xsd
+       http://www.springframework.org/schema/mvc
+       https://www.springframework.org/schema/mvc/spring-mvc.xsd">
+
+    <!--  开启组件扫描（扫描字段的包）  -->
+    <context:component-scan base-package="ssm"/>
+
+    <!--  开启 SpringMVC 的注解驱动功能  -->
+    <mvn:annotation-driven/>
+
+    <!--  让 SpringMVC 对没有 @RequestMapping 的请求直接放行  -->
+    <mvn:default-servlet-handler/>
+
+    <!--  配置视图控制器  -->
+    <mvn:view-controller path="/" view-name="WEB-INF/index.html"/>
+
+
+</beans>

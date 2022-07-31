@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="ssm.mapper.EmpMapper">
+
+    <!--  Emp getEmpById(@Param("empId") Integer empId);  -->
+    <resultMap id="abc" type="Emp">
+        <id property="empId" column="emp_id"/>
+        <result column="emp_name" property="empName"/>
+        <result column="emp_sex" property="empSex"/>
+        <result column="emp_email" property="empEmail"/>
+        <association column="emp_department"
+                     property="empDepartment"
+                     select="ssm.mapper.DepartmentMapper.selectDepById"/>
+    </resultMap>
+    <select id="getEmpById" resultMap="abc">
+        select *
+        from emp
+        where emp_id = ${empId}
+    </select>
+
+    <!--  List<Emp> selectAllEmp();  -->
+    <select id="selectAllEmp" resultMap="abc">
+        select *
+        from emp
+    </select>
+
+    <!--  int addEmp(@Param("emp") Emp emp);  -->
+    <insert id="addEmp">
+        insert into emp
+        values (0, #{emp.empName}, #{emp.empSex}, #{emp.empDepartment.departmentId}, #{emp.empEmail})
+    </insert>
+
+    <!--  Integer delEmpById(@Param("empId") Integer empId);  -->
+    <delete id="delEmpById">
+        delete
+        from emp
+        where emp_id = #{empId}
+    </delete>
+
+    <!--  Integer updateEmp(@Param("emp") Emp emp);  -->
+    <update id="updateEmp">
+        update emp
+        set emp_name       = #{emp.empName},
+            emp_sex        = #{emp.empSex},
+            emp_department = #{emp.empDepartment.departmentId},
+            emp_email      = #{emp.empEmail}
+            where emp_id = #{emp.empId}
+    </update>
+
+</mapper>
